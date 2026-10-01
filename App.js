@@ -1,16 +1,45 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  StatusBar
+} from 'react-native';
 
 const SERVER_URL = 'https://laundry-server-6wqm.onrender.com/api/laundry/analyze';
 
 export default function App() {
-  const [description, setDescription] = useState('');
+  const [activeTab, setActiveTab] = useState('env'); // 'env', 'diag', 'hist'
+
+  // 1. 세탁실 환경 상태
+  const [appliance, setAppliance] = useState('');
+  const [detergent, setDetergent] = useState('');
+
+  // 2. 진단 상태
+  const [stain, setStain] = useState('');
+  const [label, setLabel] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
 
+  // 3. 기록장 상태
+  const [history, setHistory] = useState([]);
+
+  // 환경 저장
+  const handleSaveEnv = () => {
+    Alert.alert('저장 완료', '세탁실 환경(세탁기 및 보유 세제)이 저장되었습니다.');
+    setActiveTab('diag');
+  };
+
+  // AI 진단 요청 (Render 백엔드 서버 연동)
   const handleAnalyze = async () => {
-    if (!description.trim()) {
-      Alert.alert('알림', '세탁물 상태나 오염 내용을 입력해 주세요.');
+    if (!stain.trim() && !label.trim()) {
+      Alert.alert('알림', '오염 상태나 케어라벨 정보를 입력해 주세요.');
       return;
     }
 
@@ -22,9 +51,11 @@ export default function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userDescription: description,
-          imageBase64List: [],
-          userProfile: { washerType: '통돌이' }
+          userDescription: `[오염상태]: \({stain} / [케어라벨]:\){label}`,
+          userProfile: {
+            washerType: appliance || '통돌이',
+            detergents: detergent || '일반세제'
+          }
         }),
       });
 
@@ -32,44 +63,145 @@ export default function App() {
       if (data.analysis) {
         setResult(data.analysis);
       } else {
-        setResult('분석 결과를 가져오지 못했습니다.');
+        setResult('진단 결과를 가져오지 못했습니다. 다시 시도해 주세요.');
       }
     } catch (error) {
-      Alert.alert('오류', '서버 통신 중 오류가 발생했습니다.');
+      console.error(error);
+      Alert.alert('오류', '서버 통신 중 문제가 발생했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
+  // 세탁 완료 및 기록 보관
+  const handleFinish = () => {
+    if (!result) return;
+    const newRecord = {
+      id: Date.now().toString(),
+      title: stain || '의류 세탁 진단',
+      date: new Date().toLocaleDateString('ko-KR'),
+      detail: result.substring(0, 60) + '...'
+    };
+    setHistory([newRecord, ...history]);
+    Alert.alert('완료', '세탁 기록장에 저장되었습니다.');
+    setActiveTab('hist');
+  };
+
   return (
     
-      🧺 세탁 전문 AI 진단기
       
-      세탁물 상태 및 궁금한 점:
+      
+      {/* 헤더 */}
+      
+        👕 찰칵 AI 세탁 전문가
+      
+
+      {/* 탭 버튼 */}
+      
+         setActiveTab('env')}>
+          1. 세탁실 환경
+        
+         setActiveTab('diag')}>
+          2. AI 세탁 진단
+        
+         setActiveTab('hist')}>
+          3. 세탁 기록장
+        
       
 
       
-        {loading ?  : AI 세탁 진단 받기}
-      
+        {/* 1. 세탁실 환경 탭 */}
+        {activeTab === 'env' && (
+          
+            🧺 보유 세탁기 / 건조기
+            
 
-      {result ? (
-        
-          💡 AI 진단 결과
-          {result}
-        
-      ) : null}
+            🧴 보유 세제 및 첨가제
+            
+
+            
+              세탁실 환경 저장하기
+            
+          
+        )}
+
+        {/* 2. AI 세탁 진단 탭 */}
+        {activeTab === 'diag' && (
+          
+            🔍 오염 / 의류 상태
+            
+
+            🏷️ 케어라벨 정보
+            
+
+            
+              {loading ? (
+                
+              ) : (
+                ✨ AI 세탁 솔루션 받기
+              )}
+            
+
+            {/* 진단 결과 */}
+            {result !== '' && (
+              
+                📋 세탁설 정밀 처방 리포트
+                {result}
+
+                
+                  ✅ 세탁 완료! 기록장에 보관하기
+                
+              
+            )}
+          
+        )}
+
+        {/* 3. 세탁 기록장 탭 */}
+        {activeTab === 'hist' && (
+          
+            📖 완료된 세탁 히스토리
+            {history.length === 0 ? (
+              아직 완료된 세탁 기록이 없습니다.
+            ) : (
+              history.map((item) => (
+                
+                  👕 {item.title}
+                  {item.date}
+                  {item.detail}
+                
+              ))
+            )}
+          
+        )}
+      
     
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20, backgroundColor: '#f5f7fa', paddingTop: 60 },
-  title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#333' },
-  label: { fontSize: 16, fontWeight: '600', marginBottom: 8, color: '#555' },
-  input: { backgroundColor: '#fff', borderRadius: 10, padding: 15, height: 100, textAlignVertical: 'top', borderWidth: 1, borderColor: '#ddd', marginBottom: 20 },
-  button: { backgroundColor: '#007AFF', padding: 16, borderRadius: 10, alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  resultBox: { marginTop: 25, backgroundColor: '#fff', padding: 20, borderRadius: 12, borderWidth: 1, borderColor: '#e1e4e8' },
-  resultTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#007AFF' },
-  resultText: { fontSize: 15, lineHeight: 22, color: '#333' },
+  container: { flex: 1, backgroundColor: '#f8fafc' },
+  header: { backgroundColor: '#2563eb', padding: 16, alignItems: 'center' },
+  headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: 'bold' },
+  tabContainer: { flexDirection: 'row', backgroundColor: '#ffffff', borderBottomWidth: 1, borderColor: '#e2e8f0' },
+  tabButton: { flex: 1, paddingVertical: 12, alignItems: 'center' },
+  activeTab: { borderBottomWidth: 3, borderColor: '#2563eb' },
+  tabText: { fontSize: 13, color: '#64748b' },
+  activeTabText: { color: '#2563eb', fontWeight: 'bold' },
+  content: { padding: 16 },
+  section: { marginBottom: 20 },
+  sectionTitle: { fontSize: 14, fontWeight: 'bold', color: '#334155', marginTop: 12, marginBottom: 6 },
+  input: { backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 12, fontSize: 13 },
+  textArea: { height: 80, textAlignVertical: 'top' },
+  primaryButton: { backgroundColor: '#2563eb', padding: 14, borderRadius: 10, alignItems: 'center', marginTop: 16 },
+  primaryButtonText: { color: '#ffffff', fontWeight: 'bold', fontSize: 15 },
+  resultCard: { backgroundColor: '#ffffff', padding: 16, borderRadius: 12, marginTop: 20, borderWidth: 1, borderColor: '#bfdbfe' },
+  resultTitle: { fontSize: 15, fontWeight: 'bold', color: '#1e40af', marginBottom: 8 },
+  resultText: { fontSize: 13, color: '#334155', lineHeight: 20 },
+  finishButton: { backgroundColor: '#10b981', padding: 12, borderRadius: 8, alignItems: 'center', marginTop: 12 },
+  finishButtonText: { color: '#ffffff', fontWeight: 'bold', fontSize: 13 },
+  emptyText: { textAlign: 'center', color: '#94a3b8', marginTop: 30, fontSize: 13 },
+  historyCard: { backgroundColor: '#ffffff', padding: 12, borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: '#e2e8f0' },
+  historyTitle: { fontSize: 14, fontWeight: 'bold', color: '#1e293b' },
+  historyDate: { fontSize: 10, color: '#94a3b8', marginVertical: 2 },
+  historyDetail: { fontSize: 12, color: '#475569' }
 });
