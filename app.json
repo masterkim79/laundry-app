@@ -1,17 +1,36 @@
 {
   "expo": {
-    "name": "세탁 전문가",
-    "slug": "laundry-app",
+    "name": "찰칵 AI 세탁 전문가",
+    "slug": "chalkak-ai-laundry",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
     "android": {
-      "package": "com.masterkim.laundryapp"
+      "package": "com.masterdjkim.chalkaklaundry",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
     }
   }
 }
