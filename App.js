@@ -15,28 +15,23 @@ import {
 const SERVER_URL = 'https://laundry-server-6wqm.onrender.com/api/laundry/analyze';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('env'); // 'env', 'diag', 'hist'
+  const [activeTab, setActiveTab] = useState('env');
 
-  // 1. 세탁실 환경 상태
   const [appliance, setAppliance] = useState('');
   const [detergent, setDetergent] = useState('');
 
-  // 2. 진단 상태
   const [stain, setStain] = useState('');
   const [label, setLabel] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
 
-  // 3. 기록장 상태
   const [history, setHistory] = useState([]);
 
-  // 환경 저장
   const handleSaveEnv = () => {
     Alert.alert('저장 완료', '세탁실 환경(세탁기 및 보유 세제)이 저장되었습니다.');
     setActiveTab('diag');
   };
 
-  // AI 진단 요청 (Render 백엔드 서버 연동)
   const handleAnalyze = async () => {
     if (!stain.trim() && !label.trim()) {
       Alert.alert('알림', '오염 상태나 케어라벨 정보를 입력해 주세요.');
@@ -73,7 +68,6 @@ export default function App() {
     }
   };
 
-  // 세탁 완료 및 기록 보관
   const handleFinish = () => {
     if (!result) return;
     const newRecord = {
@@ -91,12 +85,10 @@ export default function App() {
     
       
       
-      {/* 헤더 */}
       
         👕 찰칵 AI 세탁 전문가
       
 
-      {/* 탭 버튼 */}
       
          setActiveTab('env')}>
           1. 세탁실 환경
@@ -110,7 +102,6 @@ export default function App() {
       
 
       
-        {/* 1. 세탁실 환경 탭 */}
         {activeTab === 'env' && (
           
             🧺 보유 세탁기 / 건조기
@@ -125,7 +116,6 @@ export default function App() {
           
         )}
 
-        {/* 2. AI 세탁 진단 탭 */}
         {activeTab === 'diag' && (
           
             🔍 오염 / 의류 상태
@@ -142,7 +132,6 @@ export default function App() {
               )}
             
 
-            {/* 진단 결과 */}
             {result !== '' && (
               
                 📋 세탁설 정밀 처방 리포트
@@ -156,7 +145,6 @@ export default function App() {
           
         )}
 
-        {/* 3. 세탁 기록장 탭 */}
         {activeTab === 'hist' && (
           
             📖 완료된 세탁 히스토리
